@@ -7,7 +7,7 @@ namespace RayTracer.SceneObjects
         public Vector3 CenterPos { get; set; }
         public double Radius { get; set; }
 
-        public override double Intersect(Ray ray)
+        public override Intersection Intersect(Ray ray)
         {
             //Calculate using Quadratic formula
             //  http://www.csee.umbc.edu/~olano/435f02/ray-sphere.html
@@ -19,7 +19,12 @@ namespace RayTracer.SceneObjects
 
             var discriminant = b*b - c;
             if (discriminant < 0)
-                return intersectDistance;
+                return new Intersection
+                {
+                    Object = this,
+                    Distance = intersectDistance,
+                    DirectionRay = ray
+                };
 
             var sqrtDiscriminant = Math.Sqrt(discriminant);
             double t0 = -b - sqrtDiscriminant;
@@ -34,7 +39,17 @@ namespace RayTracer.SceneObjects
                 intersectDistance = t1;
             }
 
-            return intersectDistance;
+            return new Intersection
+            {
+                Object = this,
+                Distance = intersectDistance,
+                DirectionRay = ray
+            };
+        }
+
+        public override Vector3 GetNormal(Vector3 position)
+        {
+            return Vector3.Normalize(position - CenterPos);
         }
     }
 }
