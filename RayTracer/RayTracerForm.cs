@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using RayTracer.Properties;
 
 namespace RayTracer
 {
@@ -24,7 +25,7 @@ namespace RayTracer
 
             ClientSize = new Size(Width, Height + 24);
             Controls.Add(_pictureBox);
-            Text = @"Ray Tracer";
+            Text = Resources.RayTraceForm_RayTraceForm_Ray_Tracer;
             Load += RayTraceForm_Load;
 
             Show();

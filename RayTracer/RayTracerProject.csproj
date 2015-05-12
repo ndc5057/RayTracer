@@ -45,6 +45,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Camera.cs" />
+    <Compile Include="ColorExtensions.cs" />
+    <Compile Include="Intersection.cs" />
     <Compile Include="Light.cs" />
     <Compile Include="NumericExtensions.cs" />
     <Compile Include="Ray.cs" />
@@ -62,7 +64,7 @@
     <Compile Include="SceneObjects\Sphere.cs" />
     <Compile Include="SceneObjects\Surface.cs" />
     <Compile Include="SceneObjects\Triangle.cs" />
-    <Compile Include="Vector.cs" />
+    <Compile Include="Vector3.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -71,6 +73,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

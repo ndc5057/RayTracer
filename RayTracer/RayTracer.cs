@@ -24,7 +24,7 @@ namespace RayTracer
             {
                 for (int x = 0; x < ScreenWidth; x++)
                 {
-                    Color color = TraceRay(new Ray{ Origin = scene.Camera.Pos, Direction = GetRayDirection(x, y, scene)}, scene);
+                    Color color = TraceRay(new Ray{ Origin = scene.Camera.Pos, Direction = GetRayDirection(x, y, scene)}, scene, 0);
                     SetPixel(x, y, color);
                 }
             }
@@ -67,22 +67,64 @@ namespace RayTracer
                                     + scene.Camera.Up * yScale);
         }
 
-        private Color TraceRay(Ray ray, Scene scene)
+        private Color TraceRay(Ray ray, Scene scene, int recurseDepth)
         {
             //TODO
-            var distance = double.PositiveInfinity;
+            var intersections = scene.Objects.Select(obj => obj.Intersect(ray)).ToList();
 
             var firstIntersect =
-                scene.Objects.Where(obj => obj.Intersect(ray) < double.PositiveInfinity)
-                    .OrderBy(obj => obj.Intersect(ray))
+                intersections.Where(isect => !double.IsPositiveInfinity(isect.Distance))
+                    .OrderBy(isect => isect.Distance)
                     .FirstOrDefault();
             if (firstIntersect == null)
             {
                 return scene.BackgroundColor;
             }
 
-            distance = firstIntersect.Intersect(ray);
-            return firstIntersect.Surface.Color;
+            return GetShade(firstIntersect, scene, recurseDepth);
+        }
+
+        private Color GetShade(Intersection firstInstersect, Scene scene, int depth)
+        {
+            Vector3 position = firstInstersect.Distance*firstInstersect.DirectionRay.Direction + firstInstersect.DirectionRay.Origin;
+            Vector3 normal = firstInstersect.Object.GetNormal(position);
+            return GetNaturalColor(scene, position, normal, firstInstersect.Object).Add(firstInstersect.Object.Surface.Color);
+        }
+
+        private Color GetNaturalColor(Scene scene, Vector3 position, Vector3 norm, SceneObject firstIntersectObject)
+        {
+            Color output = Color.Black;
+            foreach (var light in scene.Lights)
+            {
+                Vector3 lightDistance = light.Pos - position;
+                Vector3 lightVector = Vector3.Normalize(lightDistance);
+                var distToObjTowardsLight = TestRay(new Ray {Origin = position, Direction = lightVector}, scene);
+                bool isInShadow = !((distToObjTowardsLight > lightDistance.Length) || (Math.Abs(distToObjTowardsLight) < Double.TOLERANCE));
+                if (!isInShadow)
+                {
+                    var illumination = Vector3.DotProduct(lightVector, norm);
+                    Color lcolor = illumination > 0 ? light.Color.Times(illumination) : scene.BackgroundColor;
+                    output = output.Add(lcolor);
+                }
+            }
+            return output;
+        }
+
+        private static double TestRay(Ray ray, Scene scene)
+        {
+            var intersections = scene.Objects.Select(obj => obj.Intersect(ray)).ToList();
+
+            var firstIntersect =
+                intersections.Where(isect => !double.IsPositiveInfinity(isect.Distance))
+                    .OrderBy(isect => isect.Distance)
+                    .FirstOrDefault();
+
+            if (firstIntersect == null)
+            {
+                return 0;
+            }
+
+            return firstIntersect.Distance;
         }
 
         public int ScreenWidth { get; set; }
@@ -90,14 +132,30 @@ namespace RayTracer
 
         internal static readonly Scene DefaultScene = new Scene
         {
-            Camera = Camera.Create(new Vector3(0, 0, -2), new Vector3(0.25, 0.5, 1), new Vector3(0, 1, 0), 45),
+            Camera = Camera.Create(new Vector3(1, 0, -20), new Vector3(0, 0, 0), new Vector3(0, 1, 0), 45),
+            Lights = new List<Light>
+            {
+                new Light {Color = Color.White, Pos = new Vector3(0, 0, 0)}
+            },
             Objects = new List<SceneObject>
             {
-                new Sphere { CenterPos = new Vector3(0, -0.2, 3), Radius = 0.25, Surface = new Surface {Color = Color.Orange}}, 
-                new Sphere { CenterPos = new Vector3(0, 0.25, 3), Radius = 0.25, Surface = new Surface {Color = Color.Firebrick}},
-                new Plane {Distance = 4, Normal = new Vector3(1,0,0)}
+                new Sphere
+                {
+                    CenterPos = new Vector3(0, -0.2, 3),
+                    Radius = 0.25,
+                    Surface = new Surface {Color = Color.Orange}
+                },
+                new Sphere
+                {
+                    CenterPos = new Vector3(0, 0.25, 3),
+                    Radius = 0.25,
+                    Surface = new Surface {Color = Color.Firebrick}
+                },
+                new Plane {Distance = 4, Normal = new Vector3(0, 0, -1)}
             },
             BackgroundColor = Color.Blue
         };
     }
 }
+
+
